@@ -18,7 +18,7 @@ public class Simulator {
 	private ScheduledExecutorService ex;
 	public static Logger logger = new Logger(Logger.CONSOLE);
 	
-	Simulator(int numFloors, int numElevators)  {
+	public Simulator(int numFloors, int numElevators)  {
 		building = new Building(numFloors, numElevators);
 		View view = new View(building);
 		JFrame frame = new JFrame();

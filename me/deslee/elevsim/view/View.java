@@ -16,8 +16,8 @@ import me.deslee.ticker.Tickable;
 
 public class View extends JPanel implements Tickable {
 	private static final long serialVersionUID = 7496980334914245849L;
-	private static final int VIEW_WIDTH = 800;
-	private static final int VIEW_HEIGHT = 800;
+	private static final int VIEW_WIDTH = 400;
+	private static final int VIEW_HEIGHT = 400;
 	private static final int ELEVATOR_WIDTH = 20;
 	
 	private Building building;
