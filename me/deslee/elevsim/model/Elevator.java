@@ -1,14 +1,18 @@
 package me.deslee.elevsim.model;
 
-import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
 
 import me.deslee.elevsim.exception.SimException;
 import me.deslee.elevsim.main.Simulation;
 import me.deslee.ticker.Tickable;
 
-public class Elevator implements Tickable, SimObject {
-	
+public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
+
 	private abstract class ElevatorState implements Tickable {}
+	
 	private class ElevatorIdle extends ElevatorState {
 		
 		private int waitTime = 0; // milliseconds waited
@@ -19,28 +23,37 @@ public class Elevator implements Tickable, SimObject {
 		
 		@Override
 		public void tick() {
+			
+			for (Person p : people) {
+				p.tick();
+			}
+			
 			if (waitTime < Simulation.ELEVATOR_IDLE_WAITTIME) { // wait for idlewaittime ms
 				waitTime+=Simulation.TICKTIME;
-				return;
 			}
-			if (!stops.isEmpty()) {
-				// get first stop
-				Floor closest = stops.get(0);
-				for (Floor f : stops) {
-					if (getDistanceFromFloor(f) < getDistanceFromFloor(closest)) {
-						closest = f;
+			else
+			{
+				if (!stops.isEmpty()) {
+					// get first stop
+					Iterator<Floor> it = stops.iterator();
+					Floor closest = it.next();
+	
+					while(it.hasNext()) {
+						Floor f = it.next();
+						if (getDistanceFromFloor(f) < getDistanceFromFloor(closest)) {
+							closest = f;
+						}
 					}
+					
+					Direction direction = getDirectionToGo(closest);
+					setMovingState(direction);
 				}
-				
-				Direction direction = getDirectionToGo(closest);
-				setMovingState(direction);
-			}
-			else {
-				// do nothing
+				else {
+					// do nothing
+				}
 			}
 		}
 	}
-	
 	private class ElevatorMoving extends ElevatorState {
 		
 		private double precentToNextFloor = 0.0;
@@ -65,23 +78,23 @@ public class Elevator implements Tickable, SimObject {
 				if (precentToNextFloor >= 1) {
 					precentToNextFloor -= 1;
 					timeMoved = 0;
-					assert direction != Direction.DOWN;
-					currentFloor = (direction == Direction.UP) ? building.getNextFloor(currentFloor) : building.getPrevFloor(currentFloor);
+					building.move(Elevator.this, direction);
 				}
 			}
 		}
 		
 	}
+	
 
-	private ArrayList<Person> people = new ArrayList<>();
-	private ArrayList<Floor> stops = new ArrayList<>();
-	private ElevatorState state;
-	private Direction direction;
-	private Floor currentFloor;
+	public final int ID;
 	private Building building;
 	private Direction committedDirection;
-	public final int ID;
+	private Floor currentFloor;
+	private Direction direction;
+	private Set<Person> people = new HashSet<>();
 	private Simulation simulation;
+	private ElevatorState state;
+	private Set<Floor> stops = new HashSet<>();
 	public Elevator(Simulation simulation, Building building, int ID, Floor startingFloor) {
 		this.simulation = simulation;
 		this.ID = ID;
@@ -93,6 +106,56 @@ public class Elevator implements Tickable, SimObject {
 	}
 
 	@Override
+	public int compareTo(Elevator e) {
+		return ID - e.ID;
+	}
+
+	public Direction getCommittedDirection() {
+		return committedDirection;
+	}
+	
+	public Floor getCurrentFloor() {
+		return currentFloor;
+	}
+	
+	public Direction getDirection() {
+		return direction;
+	}
+	
+	public int getDistanceFromFloor(Floor f) {
+		return Math.abs(currentFloor.ID - f.ID);
+	}
+	
+	public int getDistanceFromFloor(int floor) {
+		return Math.abs(currentFloor.ID - floor);
+	}
+	
+	public int getNumberOfStops() {
+		return stops.size();
+	}
+
+	public Set<Person> getPeople() {
+		return Collections.unmodifiableSet(people);
+	}
+
+	public double getPercentToNextFloor() {
+		if (state instanceof ElevatorMoving) {
+			return ((ElevatorMoving) state).precentToNextFloor;
+		}
+		else {
+			return 0;
+		}
+	}
+
+	public Set<Floor> getStops() {
+		return Collections.unmodifiableSet(stops);
+	}
+
+	public boolean isMoving() {
+		return state instanceof ElevatorMoving;
+	}
+
+	@Override
 	public void tick() {
 		for(Person p : people) {
 			p.tick();
@@ -100,21 +163,9 @@ public class Elevator implements Tickable, SimObject {
 		state.tick();
 	}
 
-	public void addStop(Floor floor) {
-		if (!stops.contains(floor)) {
-			stops.add(floor);
-			simulation.logger.log(this, "Stop to " + floor + " added. Stops: " + stops);
-		}
-	}
-	
-	private void setIdleState() {
-		simulation.logger.log(this, "Entered idle state on " + currentFloor + ". Stops: " + stops);
-		this.state = new ElevatorIdle();
-	}
-	
-	public void setMovingState(Direction direction) {
-		simulation.logger.log(this, "Entered moving state. Stops: " + stops);
-		this.state = new ElevatorMoving(direction);		
+	@Override
+	public String toString() {
+		return "Elevator " + ID;
 	}
 	
 	private Direction getDirectionToGo(Floor destination) {
@@ -129,54 +180,31 @@ public class Elevator implements Tickable, SimObject {
 			throw new SimException("Compared same directions. Current direction not removed from stops.");
 		}
 	}
-	
-	@Override
-	public String toString() {
-		return "Elevator " + ID;
-	}
-	
-	public double getPercentToNextFloor() {
-		if (state instanceof ElevatorMoving) {
-			return ((ElevatorMoving) state).precentToNextFloor;
-		}
-		else {
-			return 0;
-		}
+
+	private void setIdleState() {
+		simulation.logger.log(this, "Entered idle state on " + currentFloor + ". Stops: " + stops);
+		this.state = new ElevatorIdle();
 	}
 
-	public Floor getCurrentFloor() {
-		return currentFloor;
-	}
-
-	public int getNumberOfStops() {
-		return stops.size();
-	}
-
-	public boolean isMoving() {
-		return state instanceof ElevatorMoving;
-	}
-
-	public Direction getDirection() {
-		return direction;
-	}
-
-	public Direction getCommittedDirection() {
-		return committedDirection;
+	private void setMovingState(Direction direction) {
+		simulation.logger.log(this, "Entered moving state. Stops: " + stops);
+		this.state = new ElevatorMoving(direction);		
 	}
 	
-	public int getDistanceFromFloor(Floor f) {
-		return Math.abs(currentFloor.ID - f.ID);
+	protected void addStop(Floor floor) {
+		stops.add(floor);
+		simulation.logger.log(this, "Stop to " + floor + " added. Stops: " + stops);
 	}
 
-	public int getDistanceFromFloor(int floor) {
-		return Math.abs(currentFloor.ID - floor);
-	}
-
-	public ArrayList<Floor> getStops() {
-		return stops;
+	protected void setCurrentFloor(Floor currentFloor) {
+		this.currentFloor = currentFloor;
 	}
 	
-	public ArrayList<Person> getPeople() {
-		return people;
+	protected void addPerson(Person p) {
+		people.add(p);
+	}
+	
+	protected void removePerson(Person p) {
+		people.remove(p);
 	}
 }

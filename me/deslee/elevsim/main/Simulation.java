@@ -51,6 +51,9 @@ public class Simulation {
 		building.request(15, me.deslee.elevsim.model.Direction.UP);
 		building.request(9, me.deslee.elevsim.model.Direction.UP);
 		building.request(2, me.deslee.elevsim.model.Direction.DOWN);
+		building.addPerson();
+		building.addPerson();
+		building.addPerson();
 	}
 	
 	public GUI getGui() {

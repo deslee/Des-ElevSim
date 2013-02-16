@@ -1,22 +1,38 @@
 package me.deslee.elevsim.model;
 
-import java.util.ArrayList;
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.TreeSet;
 
 import me.deslee.ticker.Tickable;
 
 public class Floor implements Tickable, SimObject  {
 	
-	private ArrayList<Person> people = new ArrayList<>();
-	
 	public final int ID;
-
 	private Building building;
+	private Set<Elevator> elevators = new TreeSet<>();
+	private Set<Person> people = new HashSet<>();
 	
 	public Floor(Building b, int ID) {
 		this.building = b;
 		this.ID = ID;
 	}
 	
+	@Override
+	public boolean equals(Object o) {
+		return o instanceof Floor && ((Floor)o).ID == ID;
+	}
+	
+	public Set<Elevator> getElevators() {
+		return Collections.unmodifiableSet(elevators);
+	}
+
+	public Set<Person> getPeople() {
+		return Collections.unmodifiableSet(people);
+	}
+
 	@Override
 	public void tick() {
 		for (Person p : people) {
@@ -28,27 +44,21 @@ public class Floor implements Tickable, SimObject  {
 	public String toString() {
 		return "Floor " + ID;
 	}
-
-	public Elevator[] getElevators() {
-		Elevator[] elevators = building.getElevators();
-		Elevator[] list = new Elevator[elevators.length];
-		int i = 0;
-		
-		// invariant: i is the index of the elevator to be inserted
-		// 			i is also the number of elevators inserted
-		for (Elevator e: elevators) {
-			if (e.getCurrentFloor().equals(this)) {
-				list[i++] = e;
-			}
-		}
-		Elevator[] listT = new Elevator[i];
-		System.arraycopy(list, 0, listT, 0, listT.length);
-		return listT;
+	
+	protected void addElevator(Elevator e) {
+		elevators.add(e);
 	}
 	
-	@Override
-	public boolean equals(Object o) {
-		return o instanceof Floor && ((Floor)o).ID == ID;
+	protected void removeElevator(Elevator e) {
+		elevators.remove(e);
+	}
+
+	protected void addPerson(Person person) {
+		people.add(person);
+	}
+	
+	protected void removePerson(Person person) {
+		people.remove(person);
 	}
 
 }

@@ -19,7 +19,7 @@ public class Ticker implements Runnable {
 			tickable.tick();
 		} catch(Exception e) {
 			e.printStackTrace();
-			simulation.logger.log(this, "Stopping thread", 1);
+			simulation.logger.log(this, "Exception encountered. Stopping thread", 1);
 			throw e;
 		}
 	}

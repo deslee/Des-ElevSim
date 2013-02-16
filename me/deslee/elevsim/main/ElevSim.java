@@ -13,7 +13,7 @@ public class ElevSim {
 	 */
 	static ArrayList<Simulation> simulations = new ArrayList<>();
 	public static void main(String[] args) throws InterruptedException {
-		simulations.add(new Simulation(20, 8));
+		simulations.add(new Simulation(20, 4));
 		for (Simulation sim : simulations) {
 			while (!sim.isEnded()) {
 				synchronized(sim) {

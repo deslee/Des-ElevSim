@@ -2,8 +2,7 @@ package me.deslee.elevsim.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.util.ArrayList;
-
+import java.util.Set;
 import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -63,13 +62,11 @@ public class InfoPane extends JPanel implements Tickable {
 		
 		if (e.getStops().size() > 0) {
 			s += "<b>Stops:</b> ";
-			ArrayList<Floor> floors = e.getStops();
-			for (int i = 0; i < floors.size(); ++i) {
-				s += "F"+floors.get(i).ID;
-				if (i != floors.size()-1) {
-					s += ", ";
-				}
+			Set<Floor> floors = e.getStops();
+			for (Floor f : floors) {
+				s += "F"+f.ID + ", ";
 			}
+			s = s.substring(0, s.length()-2);
 			s += "<br>";
 		}
 		
@@ -78,16 +75,20 @@ public class InfoPane extends JPanel implements Tickable {
 	}
 
 	private void floorInfo(Floor f) {
-		String s = "<h1>" + f + "</h1>" +
-				"<b>Elevators:</b> ";
-		Elevator[] elevs = f.getElevators();
-		for (int i = 0; i < elevs.length; ++i) {
-			s += "E"+elevs[i].ID;
-			if (i != elevs.length-1) {
-				s += ", ";
+		String s = "<h1>" + f + "</h1>";
+		
+		Set<Person> people = f.getPeople();
+		s += "<b>People:</b> " + people.size() + "<br>";
+		
+		Set<Elevator> elevators = f.getElevators();
+		if (elevators.size() > 0) {
+			s += "<b>Elevators:</b> ";
+			for (Elevator e : elevators) {
+				s += "E"+e.ID + ", ";
 			}
+			s = s.substring(0, s.length()-2);
+			s += "<br>";
 		}
-		s += "<br>";
 		
 		text.setText(s);
 	}

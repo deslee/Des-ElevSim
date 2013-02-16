@@ -34,11 +34,11 @@ public class View extends JPanel implements Tickable, MouseListener {
 	public View(GUI gui, Building building) {
 		this.gui = gui;
 		this.building = building;
-		this.numFloors = building.getFloors().length;
+		this.numFloors = building.getFloors().size();
 		this.setPreferredSize(new Dimension(INITIAL_VIEW_WIDTH,INITIAL_VIEW_HEIGHT));
 
-		floors = new Rectangle2D.Double[building.getFloors().length];
-		elevators = new Rectangle2D.Double[building.getElevators().length];
+		floors = new Rectangle2D.Double[building.getFloors().size()];
+		elevators = new Rectangle2D.Double[building.getElevators().size()];
 		for (int i = 0; i < floors.length; ++i) {
 			floors[i] = new Rectangle2D.Double();
 		}
@@ -65,19 +65,19 @@ public class View extends JPanel implements Tickable, MouseListener {
 	}
 
 	private void drawElevators(Graphics2D g2d) {
-		int numElevators = building.getElevators().length;
+		int numElevators = building.getElevators().size();
 		
 		double wRatio = getWidth() / numElevators;
 		for (int i = 0; i < numElevators; ++i) {
 			g2d.setColor(Color.black);
 			double elevPosX = i * wRatio + wRatio/3;
-			double yOffset = building.getElevators()[i].getPercentToNextFloor() * floorHeight;
+			double yOffset = building.getElevators().get(i).getPercentToNextFloor() * floorHeight;
 			
-			if (building.getElevators()[i].getDirection() == Direction.DOWN) {
+			if (building.getElevators().get(i).getDirection() == Direction.DOWN) {
 				yOffset *= -1;
 			}
 			
-			double elevPosY = floorHeight * (numFloors - 1 - building.getElevators()[i].getCurrentFloor().ID) - yOffset;
+			double elevPosY = floorHeight * (numFloors - 1 - building.getElevators().get(i).getCurrentFloor().ID) - yOffset;
 			double elevHeight = floorHeight;
 			double shaftPosX = elevPosX+(ELEVATOR_WIDTH/2);
 			Line2D.Double shaft = new Line2D.Double(shaftPosX, 0, shaftPosX, getHeight());
@@ -94,7 +94,7 @@ public class View extends JPanel implements Tickable, MouseListener {
 			
 			//draw the stops
 			g2d.setColor(Color.blue);
-			for (Floor stop: building.getElevators()[i].getStops()) {
+			for (Floor stop: building.getElevators().get(i).getStops()) {
 				double pointX = i * wRatio + wRatio/3;
 				double pointY = floorHeight * (numFloors - 1 - stop.ID);
 				g2d.draw(new Rectangle2D.Double(pointX, pointY, ELEVATOR_WIDTH, elevHeight));
@@ -112,14 +112,14 @@ public class View extends JPanel implements Tickable, MouseListener {
 	public void mouseClicked(MouseEvent e) {
 		for(int i = 0; i < elevators.length; ++i) {
 			if (elevators[i].contains(e.getX(), e.getY())) {
-				gui.focusOn(building.getElevators()[i]);
+				gui.focusOn(building.getElevators().get(i));
 				return;
 			}
 		}
 		
 		for(int i = 0; i < floors.length; ++i) {
 			if (floors[i].contains(e.getX(), e.getY())) {
-				gui.focusOn(building.getFloors()[i]);
+				gui.focusOn(building.getFloors().get(i));
 				return;
 			}
 		}
