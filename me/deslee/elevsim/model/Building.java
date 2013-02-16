@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 import me.deslee.elevsim.exception.SimException;
+import me.deslee.elevsim.main.Simulation;
 import me.deslee.ticker.Tickable;
 
 public class Building implements Tickable {
@@ -21,16 +22,18 @@ public class Building implements Tickable {
 	private Floor[] floors;
 	private Elevator[] elevators;
 	private Deque<Request> requests = new ArrayDeque<>();
-	public Building(int numFloors, int numElevators) {
+	private Simulation simulation;
+	public Building(Simulation simulation, int numFloors, int numElevators) {
+		this.simulation = simulation;
 		floors = new Floor[numFloors];
 		elevators = new Elevator[numElevators];
 		
 		// instantiate the objects
 		for (int i = 0; i < numFloors; ++i) {
-			floors[i] = new Floor(i);
+			floors[i] = new Floor(this, i);
 		}
 		for (int i = 0; i < numElevators; ++i) {
-			elevators[i] = new Elevator(this, i, floors[0]);
+			elevators[i] = new Elevator(this.simulation, this, i, floors[0]);
 		}
 	}
 	
@@ -113,28 +116,12 @@ public class Building implements Tickable {
 		}
 	}
 
-	public int getNumberOfFloors() {
-		return floors.length;
+	public Floor[] getFloors() {
+		return floors;
 	}
 
-	public int getNumberOfElevators() {
-		return elevators.length;
-	}
-
-	public double getPercentToNextFloor(int elevator) {
-		return elevators[elevator].getPercentToNextFloor();
-	}
-
-	public int getCurrentFloor(int elevator) {
-		return elevators[elevator].getCurrentFloor().ID;
-	}
-
-	public Direction getDirection(int elevator) {
-		return elevators[elevator].getDirection();
-	}
-	
-	public Integer[] getStops(int elevator) {
-		return elevators[elevator].getStops();
+	public Elevator[] getElevators() {
+		return elevators;
 	}
 
 

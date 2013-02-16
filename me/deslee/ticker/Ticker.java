@@ -1,12 +1,14 @@
 package me.deslee.ticker;
 
-import me.deslee.elevsim.main.Simulator;
+import me.deslee.elevsim.main.Simulation;
 
 public class Ticker implements Runnable {
 	private Tickable tickable;
 	public final String name;
+	private Simulation simulation;
 	
-	public Ticker(Tickable tickable, String name) {
+	public Ticker(Simulation simulation, Tickable tickable, String name) {
+		this.simulation = simulation;
 		this.tickable = tickable;
 		this.name = name;
 	}
@@ -17,7 +19,7 @@ public class Ticker implements Runnable {
 			tickable.tick();
 		} catch(Exception e) {
 			e.printStackTrace();
-			Simulator.logger.log(this, "Stopping thread", 1);
+			simulation.logger.log(this, "Stopping thread", 1);
 			throw e;
 		}
 	}
