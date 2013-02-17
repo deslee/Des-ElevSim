@@ -69,8 +69,10 @@ public class InfoPane extends JPanel implements Tickable {
 			s = s.substring(0, s.length()-2);
 			s += "<br>";
 		}
-		
+
 		s += "<b>Passengers:</b> " + e.getPeople().size() + "<br>";
+		s += "<b>Direction:</b> " + e.getDirection() + "<br>";
+		s += "<b>CommittedDirection:</b> " + e.getCommittedDirection() + "<br>";
 		text.setText(s);
 	}
 

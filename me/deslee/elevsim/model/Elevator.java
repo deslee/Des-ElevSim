@@ -1,11 +1,12 @@
 package me.deslee.elevsim.model;
 
+import java.util.ArrayDeque;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import me.deslee.elevsim.exception.SimException;
 import me.deslee.elevsim.main.Simulation;
 import me.deslee.ticker.Tickable;
 
@@ -17,8 +18,11 @@ public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
 		
 		private int waitTime = 0; // milliseconds waited
 		
-		public ElevatorIdle() {
-			Elevator.this.direction = Direction.NONE;
+		private ElevatorIdle() {
+			direction = Direction.NONE;
+			if (stops.size() == 0) {
+				committedDirection = Direction.NONE;
+			}
 		}
 		
 		@Override
@@ -59,8 +63,11 @@ public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
 		private double precentToNextFloor = 0.0;
 		private int timeMoved = 0; // milliseconds moving
 		
-		public ElevatorMoving(Direction direction) {
+		private ElevatorMoving(Direction direction) {
 			Elevator.this.direction = direction;
+			if (committedDirection == Direction.NONE) {
+				committedDirection = direction;
+			}
 		}
 				
 		@Override
@@ -95,12 +102,14 @@ public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
 	private Simulation simulation;
 	private ElevatorState state;
 	private Set<Floor> stops = new HashSet<>();
+	private Deque<Floor> stopsRequested = new ArrayDeque<>();
+	
 	public Elevator(Simulation simulation, Building building, int ID, Floor startingFloor) {
 		this.simulation = simulation;
 		this.ID = ID;
 		this.building = building;
 		this.currentFloor = startingFloor;
-		this.committedDirection = ID % 2 == 0 ? Direction.UP : Direction.DOWN;
+		this.committedDirection = Direction.NONE;
 		direction = Direction.NONE;
 		setIdleState();
 	}
@@ -157,6 +166,12 @@ public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
 
 	@Override
 	public void tick() {
+		synchronized(stopsRequested) {
+			while(!stopsRequested.isEmpty()) {
+				addStop(stopsRequested.removeFirst());
+			}
+		}
+		
 		for(Person p : people) {
 			p.tick();
 		}
@@ -168,7 +183,7 @@ public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
 		return "Elevator " + ID;
 	}
 	
-	private Direction getDirectionToGo(Floor destination) {
+	protected Direction getDirectionToGo(Floor destination) {
 		if (currentFloor.ID < destination.ID) {
 			return Direction.UP;
 		}
@@ -176,8 +191,7 @@ public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
 			return Direction.DOWN;
 		}
 		else {
-			simulation.logger.log(this, "elevexcept", 1);
-			throw new SimException("Compared same directions. Current direction not removed from stops.");
+			return Direction.NONE;
 		}
 	}
 
@@ -206,5 +220,15 @@ public class Elevator implements Tickable, SimObject, Comparable<Elevator> {
 	
 	protected void removePerson(Person p) {
 		people.remove(p);
+	}
+	
+	protected void setCommittedDirection(Direction d) {
+		this.committedDirection = d;
+	}
+
+	public void pushButton(Floor destinationFloor) {
+		synchronized(stopsRequested) {
+			stopsRequested.addLast(destinationFloor);
+		}
 	}
 }

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
+import me.deslee.elevsim.exception.SimException;
 import me.deslee.ticker.Tickable;
 
 public class Floor implements Tickable, SimObject  {
@@ -36,6 +37,11 @@ public class Floor implements Tickable, SimObject  {
 	@Override
 	public void tick() {
 		for (Person p : people) {
+			if (p.currentElevator != null || p.currentFloor == null) {
+				throw new SimException("Person ticked on floor, " + 
+			"but either currentFloor is null or currentElevator is not null. " + 
+			"CurrentFloor: " + p.currentFloor + " CurrentElevator: " + p.currentElevator);
+			}
 			p.tick();
 		}
 	}

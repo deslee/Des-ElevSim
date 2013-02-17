@@ -4,6 +4,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 
 import me.deslee.elevsim.exception.SimException;
@@ -12,7 +13,7 @@ import me.deslee.ticker.Tickable;
 
 public class Building implements Tickable {
 
-	private class Request {
+	public class Request {
 		private Direction direction;
 		private Floor floor;
 		private Request(Floor f, Direction d) {
@@ -122,15 +123,34 @@ public class Building implements Tickable {
 		else {
 			// Elevators not doing anything get top priority.
 			for (Elevator e: elevators) {
-				if (e.getNumberOfStops() == 0) {
+				if (e.getCommittedDirection() == Direction.NONE) {
 					e.addStop(r.floor);
+					Direction directionToGo = e.getDirectionToGo(r.floor);
+					e.setCommittedDirection(directionToGo);
 					return;
 				}
 			}
 
+			// closest elevator gets it then
+			// TODO: have algorithm consider committed directions.
 			Elevator bestElevator = elevators.get(0);
 			
 			for (Elevator e: elevators) {
+				if (e.getCommittedDirection() != r.direction) {
+					continue;
+				}
+				
+				if (e.getDistanceFromFloor(r.floor) < bestElevator.getDistanceFromFloor(r.floor)) {
+					bestElevator = e;
+				}
+				else if (e.getDistanceFromFloor(r.floor) == bestElevator.getDistanceFromFloor(r.floor)) {
+					bestElevator = e.getNumberOfStops() < bestElevator.getNumberOfStops() ? e : bestElevator;
+				}
+			}
+			
+			// if no elevators have the same committed direction....
+			for (Elevator e: elevators) {
+				// assign to the closest and easiest elevator
 				if (e.getDistanceFromFloor(r.floor) < bestElevator.getDistanceFromFloor(r.floor)) {
 					bestElevator = e;
 				}
@@ -144,10 +164,18 @@ public class Building implements Tickable {
 	}
 
 	protected void move(Elevator elevator, Direction direction) {
+		if (direction == Direction.NONE) {
+			throw new SimException("Trying to move an elevator with direction == Direction.None");
+		}
 		Floor current = elevator.getCurrentFloor();
 		Floor destination = (direction == Direction.UP) ? getNextFloor(current) : getPrevFloor(current);
 		elevator.setCurrentFloor(destination);
 		current.removeElevator(elevator);
 		destination.addElevator(elevator);
 	}
+
+	public void pushButton(Person p, Direction d) {
+		request(p.currentFloor.ID, d);
+	}
+
 }

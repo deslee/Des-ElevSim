@@ -6,6 +6,7 @@ public class Ticker implements Runnable {
 	private Tickable tickable;
 	public final String name;
 	private Simulation simulation;
+	private boolean running = true;
 	
 	public Ticker(Simulation simulation, Tickable tickable, String name) {
 		this.simulation = simulation;
@@ -15,12 +16,16 @@ public class Ticker implements Runnable {
 	
 	@Override
 	public void run() {
-		try {
-			tickable.tick();
-		} catch(Exception e) {
-			e.printStackTrace();
-			simulation.logger.log(this, "Exception encountered. Stopping thread", 1);
-			throw e;
+		synchronized(this) {
+			if (running) {
+				try {
+					tickable.tick();
+				} catch(Exception e) {
+					e.printStackTrace();
+					simulation.logger.log(this, "Exception encountered. Stopping thread", 1);
+					throw e;
+				}
+			}
 		}
 	}
 	
@@ -28,5 +33,20 @@ public class Ticker implements Runnable {
 	public String toString() {
 		return "Ticker " + name;
 	}
+	
+	public void pause() {
+		synchronized(this) {
+			running = false;
+		}
+	}
+	
+	public void resume() {
+		synchronized(this) {
+			running = true;
+			this.notifyAll();
+		}
+	}
+	
+	
 	
 }

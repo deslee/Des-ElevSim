@@ -16,6 +16,33 @@ public class SimMenu extends JMenuBar {
 		menu = new JMenu("File");
 		add(menu);
 		
+		final JMenuItem pause = new JMenuItem("Pause Simulation");
+		final JMenuItem resume = new JMenuItem("Resume Simulation");
+		resume.setEnabled(false);
+		pause.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				pause.setEnabled(false);
+				resume.setEnabled(true);
+				SimMenu.this.gui.simulation.pause();
+			}
+			
+		});
+		menu.add(pause);
+		
+		resume.addActionListener(new ActionListener() {
+			
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				resume.setEnabled(false);
+				pause.setEnabled(true);
+				SimMenu.this.gui.simulation.resume();
+			}
+			
+		});
+		menu.add(resume);
+		
 		final JMenuItem stop = new JMenuItem("Stop Simulation");
 		stop.addActionListener(new ActionListener() {
 			
